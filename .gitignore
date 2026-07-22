@@ -1,2 +1,5 @@
 .DS_Store
 *.log
+
+# OpenMapTiles の作業ディレクトリ（clone・生成物を含むため管理外）
+.openmaptiles/

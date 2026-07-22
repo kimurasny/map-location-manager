@@ -1,0 +1,6 @@
+# 地図データ（PBF・MBTiles・bbox）は容量が大きいためリポジトリに含めない。
+# scripts/download-map.sh と scripts/generate-mbtiles.sh で生成・取得する。
+*.osm.pbf
+*.mbtiles
+*.bbox
+!.gitignore

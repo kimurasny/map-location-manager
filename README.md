@@ -3,8 +3,9 @@
 地図上をクリックして地点を登録し、地点ごとにテキスト情報（タイトル・説明）を
 保存・閲覧・編集・削除できる Web アプリケーションです。
 
-地図タイルは外部サービスに依存せず、Docker 上の **TileServer GL**（OpenStreetMap /
-OpenMapTiles 由来のデータ）で自前配信します。
+地図タイルは外部サービスに依存せず、OpenStreetMap の日本データ（Geofabrik）から
+**OpenMapTiles** の標準手順で MBTiles を生成し、Docker 上の **TileServer GL** で
+自前配信します。既定の対象地域は**関東**で、`.env` の変更だけで日本全体へ切り替えられます。
 
 ---
 
@@ -67,44 +68,94 @@ map-location-manager/
 │       ├── pages/             # 画面
 │       ├── types/            # 型（生成型の再エクスポート）
 │       └── utils/            # ユーティリティ
-└── infra/
-    └── tileserver/            # TileServer GL 設定 + データ取得スクリプト
+├── scripts/                    # 地図データのダウンロード・生成・起動・削除
+│   ├── download-map.sh        # PBF ダウンロード
+│   ├── generate-mbtiles.sh    # OpenMapTiles で MBTiles 生成
+│   ├── start.sh               # docker compose 起動
+│   ├── clean.sh               # 生成物削除
+│   └── lib.sh                 # 共通処理（.env 読込・チェック）
+├── data/                       # 生成物（PBF / MBTiles）※ git 管理外
+└── .env                        # 地図データ生成の設定（MAP_NAME / PBF_URL / OUTPUT_MBTILES）
 ```
 
 ---
 
-## 起動方法（Docker Compose）
+## 地図データの準備と起動
 
-### 1. 地図データ（タイル）の取得
+地図（MBTiles）はサイズが大きいためリポジトリに含めていません。
+**初回のみ** OpenStreetMap の日本データをダウンロードして MBTiles を生成します。
 
-TileServer GL が配信する地図データはサイズが大きいためリポジトリに含めていません。
-初回のみ、以下のスクリプトでスタイル・フォント・地図データ（mbtiles）を取得します。
-
-```bash
-bash infra/tileserver/download-data.sh
-```
-
-> 既定では動作確認用のサンプル（チューリッヒ周辺）を取得します。
-> 他地域を表示したい場合は、対象地域の **OpenMapTiles 形式** の `.mbtiles` を
-> `infra/tileserver/tiles.mbtiles` として置き換えてください。
-> 表示中心は環境変数（`VITE_MAP_CENTER_LAT` / `VITE_MAP_CENTER_LNG` / `VITE_MAP_ZOOM`）で調整できます。
-
-### 2. 起動
+### 初回手順
 
 ```bash
+# 1. PBF（OSM生データ）を Geofabrik からダウンロード（既定: 関東）
+./scripts/download-map.sh
+
+# 2. OpenMapTiles の標準手順で MBTiles を生成（PostGIS→import→bbox→タイル生成）
+./scripts/generate-mbtiles.sh
+
+# 3. 全サービスを起動
 docker compose up --build
+#   もしくは: ./scripts/start.sh --build
 ```
+
+生成された `data/kanto.mbtiles` を TileServer GL が読み込み、地図を配信します。
+TileServer GL の同梱スタイル（basic-preview）とフォントでレンダリングするため、
+別途スタイル・フォントを用意する必要はありません。
 
 | サービス | URL | 説明 |
 | --- | --- | --- |
 | frontend | http://localhost:3000 | アプリ本体 |
 | backend | http://localhost:8080 | REST API |
 | backend（Swagger UI） | http://localhost:8080/swagger-ui.html | API ドキュメント |
-| tileserver | http://localhost:8081 | 地図タイル |
+| tileserver | http://localhost:8081 | 地図（日本地図） |
 | postgres | localhost:5432 | DB（maplocation / maplocation） |
 
-起動後、`http://localhost:3000` を開くと地図が表示されます。
+起動後、`http://localhost:3000` を開くとアプリが、`http://localhost:8081` を開くと
+TileServer GL の地図ビューア（日本地図）が表示されます。
 初期データ（東京近郊の 3 地点）が登録済みです。
+
+> **ポートについて**: `http://localhost:8080` は backend（REST API）が使用します。
+> 地図の TileServer GL は `http://localhost:8081` で配信します。
+
+### 対象地域の更新・切り替え
+
+`.env` を編集して対象地域を変更し、再生成します。
+
+```bash
+# .env を編集（例: 関東 → 日本全体）
+#   MAP_NAME=japan
+#   PBF_URL=https://download.geofabrik.de/asia/japan-latest.osm.pbf
+#   OUTPUT_MBTILES=japan.mbtiles
+
+./scripts/clean.sh            # 既存の生成物を削除
+./scripts/download-map.sh     # 新しい PBF をダウンロード
+./scripts/generate-mbtiles.sh # MBTiles を再生成
+docker compose up --build
+```
+
+ズームの詳細度は `.env` の `MIN_ZOOM` / `MAX_ZOOM` で調整できます
+（既定 0〜14。値を大きくすると詳細になりますが容量・生成時間が増えます）。
+
+### 必要ディスク容量・処理時間の目安
+
+| 対象 | PBF サイズ | 生成 MBTiles | 目安時間(8コア想定) | 必要ディスク |
+| --- | --- | --- | --- | --- |
+| 関東（kanto） | 約 450MB | 数百MB〜 | 数十分程度 | 10GB 以上の空き |
+| 日本全体（japan） | 約 1.7GB | 数GB | 数時間 | 30GB 以上の空き |
+
+> 生成には OpenMapTiles / PostGIS の Docker イメージ（合計数GB）を取得します。
+> メモリは 8GB 以上（日本全体は 16GB 以上）を推奨します。
+
+### 日本全体へ変更する方法（まとめ）
+
+`.env` を次のように変更し、上記「対象地域の更新・切り替え」の手順を実行します。
+
+```dotenv
+MAP_NAME=japan
+PBF_URL=https://download.geofabrik.de/asia/japan-latest.osm.pbf
+OUTPUT_MBTILES=japan.mbtiles
+```
 
 ---
 

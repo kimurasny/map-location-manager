@@ -33,14 +33,17 @@ services:
       postgres:
         condition: service_healthy
 
+  # OpenMapTiles で生成した MBTiles(data/${OUTPUT_MBTILES}) を配信する。
+  # MBTiles だけを渡すと TileServer GL が同梱スタイル(basic-preview)とフォントで
+  # 自動設定・レンダリングする（別途スタイル/フォントの用意は不要）。
   tileserver:
-    image: maptiler/tileserver-gl:latest
+    image: maptiler/tileserver-gl:v5.6.0
     container_name: mlm-tileserver
-    command: ["--config", "/data/config.json", "--port", "8080"]
+    command: ["${OUTPUT_MBTILES:-kanto.mbtiles}"]
     ports:
       - "8081:8080"
     volumes:
-      - ./infra/tileserver:/data:ro
+      - ./data:/data
 
   frontend:
     build:
