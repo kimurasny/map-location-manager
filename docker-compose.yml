@@ -1,0 +1,56 @@
+# 地点情報マネージャー: frontend / backend / postgres / tileserver を一括起動する。
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: mlm-postgres
+    environment:
+      POSTGRES_DB: maplocation
+      POSTGRES_USER: maplocation
+      POSTGRES_PASSWORD: maplocation
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U maplocation -d maplocation"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    container_name: mlm-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/maplocation
+      SPRING_DATASOURCE_USERNAME: maplocation
+      SPRING_DATASOURCE_PASSWORD: maplocation
+      # 本番配信は同一オリジンのため CORS は不要だが、開発用オリジンを許可しておく。
+      APP_CORS_ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:5173"
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  tileserver:
+    image: maptiler/tileserver-gl:latest
+    container_name: mlm-tileserver
+    command: ["--config", "/data/config.json", "--port", "8080"]
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./infra/tileserver:/data:ro
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: mlm-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+      - tileserver
+
+volumes:
+  postgres-data:

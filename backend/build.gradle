@@ -1,0 +1,50 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.3.5'
+    id 'io.spring.dependency-management' version '1.1.6'
+}
+
+group = 'com.example'
+version = '1.0.0'
+
+java {
+    // Java 21 を利用する（技術要件）
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    mybatisStarterVersion = '3.0.3'
+    springdocVersion = '2.6.0'
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // MyBatis（repository 層）
+    implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${mybatisStarterVersion}"
+
+    // Flyway（DDL/マイグレーション管理）
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-database-postgresql'
+
+    // PostgreSQL ドライバ
+    runtimeOnly 'org.postgresql:postgresql'
+
+    // OpenAPI（springdoc）: 実装から OpenAPI UI を提供
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdocVersion}"
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${mybatisStarterVersion}"
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

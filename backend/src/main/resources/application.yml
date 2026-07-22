@@ -1,0 +1,39 @@
+spring:
+  application:
+    name: map-location-manager-backend
+  datasource:
+    # 接続先は環境変数で上書き可能（Docker Compose から注入）
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/maplocation}
+    username: ${SPRING_DATASOURCE_USERNAME:maplocation}
+    password: ${SPRING_DATASOURCE_PASSWORD:maplocation}
+    driver-class-name: org.postgresql.Driver
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+# MyBatis 設定
+mybatis:
+  mapper-locations: classpath:mybatis/mapper/*.xml
+  # UUID 用の独自 TypeHandler を登録する
+  type-handlers-package: com.example.maplocation.config
+  configuration:
+    # snake_case のカラムを camelCase プロパティへ自動マッピング
+    map-underscore-to-camel-case: true
+
+# springdoc / Swagger UI
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+server:
+  port: 8080
+
+# ログ出力レベル
+logging:
+  level:
+    root: INFO
+    com.example.maplocation: DEBUG
+    org.mybatis: INFO

@@ -1,0 +1,6 @@
+# ダウンロードした地図アセットはリポジトリに含めない（サイズが大きいため）。
+# 初回は download-data.sh で取得する。
+tiles.mbtiles
+*.mbtiles
+styles/
+fonts/

@@ -1,0 +1,25 @@
+.container {
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+.status {
+  position: absolute;
+  top: var(--space-4);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 600;
+  margin: 0;
+  padding: var(--space-2) var(--space-4);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  font-weight: 700;
+}
+
+.statusError {
+  color: var(--color-error-text);
+  border-color: var(--color-error-text);
+}

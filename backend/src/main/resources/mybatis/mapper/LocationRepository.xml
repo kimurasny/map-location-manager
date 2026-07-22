@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+  location テーブルへの SQL を定義する MyBatis マッパー。
+  namespace は Repository インタフェースの完全修飾名と一致させる。
+-->
+<mapper namespace="com.example.maplocation.repository.LocationRepository">
+
+    <resultMap id="locationResultMap" type="com.example.maplocation.entity.Location">
+        <id property="id" column="id" javaType="java.util.UUID"/>
+        <result property="title" column="title"/>
+        <result property="description" column="description"/>
+        <result property="latitude" column="latitude"/>
+        <result property="longitude" column="longitude"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <sql id="columns">
+        id, title, description, latitude, longitude, created_at, updated_at
+    </sql>
+
+    <select id="findAll" resultMap="locationResultMap">
+        SELECT <include refid="columns"/>
+        FROM location
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="findById" resultMap="locationResultMap">
+        SELECT <include refid="columns"/>
+        FROM location
+        WHERE id = #{id}
+    </select>
+
+    <insert id="insert" parameterType="com.example.maplocation.entity.Location">
+        INSERT INTO location (id, title, description, latitude, longitude, created_at, updated_at)
+        VALUES (#{id}, #{title}, #{description}, #{latitude}, #{longitude}, #{createdAt}, #{updatedAt})
+    </insert>
+
+    <update id="update" parameterType="com.example.maplocation.entity.Location">
+        UPDATE location
+        SET title = #{title},
+            description = #{description},
+            latitude = #{latitude},
+            longitude = #{longitude},
+            updated_at = #{updatedAt}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM location WHERE id = #{id}
+    </delete>
+
+</mapper>

@@ -1,0 +1,15 @@
+.openapi-generator-ignore
+apis/LocationsApi.ts
+apis/index.ts
+docs/ErrorResponse.md
+docs/FieldError.md
+docs/Location.md
+docs/LocationRequest.md
+docs/LocationsApi.md
+index.ts
+models/ErrorResponse.ts
+models/FieldError.ts
+models/Location.ts
+models/LocationRequest.ts
+models/index.ts
+runtime.ts
