@@ -1,0 +1,90 @@
+/*
+ * デザイントークンと全体スタイル。
+ * デジタル庁デザインシステム（DADS β版）のガイドラインを参考に、
+ * 配色・余白・フォーカス表示・タイポグラフィを定義する。
+ * アクセシビリティ（WCAG 2.2 AA）を意識し、フォーカスリングと十分なコントラストを確保する。
+ */
+
+:root {
+  /* --- カラートークン（DADS の Primary / Neutral を参考にした配色） --- */
+  --color-primary: #0017c1; /* デジタル庁ブルー相当 */
+  --color-primary-hover: #000fa0;
+  --color-primary-active: #000a78;
+  --color-on-primary: #ffffff;
+
+  --color-danger: #ce0000;
+  --color-danger-hover: #a50000;
+  --color-on-danger: #ffffff;
+
+  --color-text: #1a1a1c;
+  --color-text-subtle: #5c5c5c;
+  --color-border: #949398;
+  --color-border-strong: #1a1a1c;
+  --color-bg: #ffffff;
+  --color-bg-subtle: #f0f0f0;
+  --color-surface: #ffffff;
+  --color-focus: #ffb300; /* フォーカスリング（高コントラストの黄） */
+  --color-error-text: #ce0000;
+
+  /* --- 余白（8px グリッド） --- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  /* --- その他 --- */
+  --radius: 8px;
+  --header-height: 56px;
+  --font-family: system-ui, -apple-system, 'Segoe UI', 'Hiragino Kaku Gothic ProN',
+    'Noto Sans JP', Meiryo, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  line-height: 1.6;
+}
+
+/* DADS 準拠: すべてのフォーカス可能要素に明確なフォーカスリングを表示する。 */
+:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  line-height: 1.4;
+}
+
+a {
+  color: var(--color-primary);
+}
+
+/* スクリーンリーダー専用テキスト。 */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

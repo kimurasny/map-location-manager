@@ -1,0 +1,257 @@
+openapi: 3.0.3
+info:
+  title: Map Location Manager API
+  description: |
+    地図上の地点情報（location）を登録・取得・更新・削除するためのAPI仕様。
+
+    この OpenAPI ドキュメントを **唯一のAPI仕様（Single Source of Truth）** とする。
+    - バックエンド（Spring Boot）は springdoc-openapi によりこの仕様に沿った実装を行う。
+    - フロントエンド（React）は OpenAPI Generator で生成したクライアントのみを利用する（手書き fetch は禁止）。
+  version: 1.0.0
+  contact:
+    name: Map Location Manager
+servers:
+  - url: http://localhost:8080
+    description: ローカル開発環境（Docker Compose）
+tags:
+  - name: locations
+    description: 地点情報の管理
+
+paths:
+  /api/locations:
+    get:
+      tags: [locations]
+      summary: 地点一覧の取得
+      description: 登録済みの全地点を作成日時の降順で取得する。
+      operationId: listLocations
+      responses:
+        "200":
+          description: 地点一覧
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Location"
+    post:
+      tags: [locations]
+      summary: 地点の新規登録
+      description: 緯度・経度・タイトル・説明を指定して地点を新規登録する。
+      operationId: createLocation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LocationRequest"
+      responses:
+        "201":
+          description: 登録された地点
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Location"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/locations/{id}:
+    parameters:
+      - $ref: "#/components/parameters/LocationId"
+    get:
+      tags: [locations]
+      summary: 地点詳細の取得
+      operationId: getLocation
+      responses:
+        "200":
+          description: 地点詳細
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Location"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [locations]
+      summary: 地点の更新
+      operationId: updateLocation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LocationRequest"
+      responses:
+        "200":
+          description: 更新された地点
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Location"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [locations]
+      summary: 地点の削除
+      operationId: deleteLocation
+      responses:
+        "204":
+          description: 削除成功（本文なし）
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+components:
+  parameters:
+    LocationId:
+      name: id
+      in: path
+      required: true
+      description: 地点ID（UUID）
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    BadRequest:
+      description: リクエスト内容が不正（バリデーションエラー）
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: 指定された地点が存在しない
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+  schemas:
+    Location:
+      type: object
+      description: 保存済みの地点情報
+      required:
+        - id
+        - title
+        - latitude
+        - longitude
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 地点ID
+          example: "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+        title:
+          type: string
+          description: タイトル
+          maxLength: 100
+          example: "東京駅"
+        description:
+          type: string
+          nullable: true
+          description: 説明（任意）
+          example: "JR東日本・東京メトロの主要駅"
+        latitude:
+          type: number
+          format: double
+          description: 緯度
+          minimum: -90
+          maximum: 90
+          example: 35.681236
+        longitude:
+          type: number
+          format: double
+          description: 経度
+          minimum: -180
+          maximum: 180
+          example: 139.767125
+        createdAt:
+          type: string
+          format: date-time
+          description: 作成日時（ISO 8601）
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新日時（ISO 8601）
+
+    LocationRequest:
+      type: object
+      description: 地点の登録・更新リクエスト
+      required:
+        - title
+        - latitude
+        - longitude
+      properties:
+        title:
+          type: string
+          description: タイトル（必須・1〜100文字）
+          minLength: 1
+          maxLength: 100
+          example: "東京駅"
+        description:
+          type: string
+          nullable: true
+          description: 説明（任意）
+          example: "JR東日本・東京メトロの主要駅"
+        latitude:
+          type: number
+          format: double
+          description: 緯度（-90〜90）
+          minimum: -90
+          maximum: 90
+          example: 35.681236
+        longitude:
+          type: number
+          format: double
+          description: 経度（-180〜180）
+          minimum: -180
+          maximum: 180
+          example: 139.767125
+
+    ErrorResponse:
+      type: object
+      description: エラー応答の共通フォーマット
+      required:
+        - timestamp
+        - status
+        - error
+        - message
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: 発生日時
+        status:
+          type: integer
+          description: HTTPステータスコード
+          example: 400
+        error:
+          type: string
+          description: エラー種別
+          example: "Bad Request"
+        message:
+          type: string
+          description: エラーメッセージ
+          example: "title は必須です"
+        fieldErrors:
+          type: array
+          description: フィールド単位のバリデーションエラー（存在する場合）
+          items:
+            $ref: "#/components/schemas/FieldError"
+
+    FieldError:
+      type: object
+      required:
+        - field
+        - message
+      properties:
+        field:
+          type: string
+          description: 対象フィールド名
+          example: "title"
+        message:
+          type: string
+          description: エラー内容
+          example: "must not be blank"
