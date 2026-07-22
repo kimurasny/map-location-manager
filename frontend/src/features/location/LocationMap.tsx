@@ -6,7 +6,7 @@ import 'leaflet/dist/leaflet.css';
 /** 地図タイルの URL。TileServer GL を利用し、環境変数で上書き可能。 */
 const TILE_URL =
   import.meta.env.VITE_TILE_URL ??
-  'http://localhost:8081/styles/basic/{z}/{x}/{y}.png';
+  'http://localhost:8081/styles/basic-preview/{z}/{x}/{y}.png';
 
 /**
  * 地図の初期表示中心とズーム。環境変数で上書き可能。
