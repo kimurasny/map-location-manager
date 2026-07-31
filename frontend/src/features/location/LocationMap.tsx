@@ -6,9 +6,12 @@ import { createMarkerElement } from './markerElement';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './locationMap.css';
 
-/** TileServer GL の TileJSON URL（ベクタタイル）。環境変数で上書き可能。 */
+/**
+ * TileServer GL の TileJSON URL（ベクタタイル）。環境変数で上書き可能。
+ * OpenMapTiles の MBTiles はファイル名に関係なく `/data/v3.json` で配信される。
+ */
 const TILE_JSON_URL =
-  import.meta.env.VITE_TILE_JSON_URL ?? 'http://localhost:8081/data/kanto.json';
+  import.meta.env.VITE_TILE_JSON_URL ?? 'http://localhost:8081/data/v3.json';
 
 /** ラベル描画に使うフォント(glyphs)の URL テンプレート。 */
 const GLYPHS_URL =

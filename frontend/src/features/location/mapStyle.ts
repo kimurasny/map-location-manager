@@ -263,6 +263,7 @@ export function buildMapStyle(
         filter: [
           'all',
           ['has', 'name'],
+          ['!=', ['get', 'subclass'], 'junction'],
           [
             'in',
             ['get', 'class'],
@@ -302,7 +303,8 @@ export function buildMapStyle(
         minzoom: 10,
         filter: [
           'all',
-          ['has', 'ref'],
+          ['!=', ['coalesce', ['get', 'ref'], ''], ''],
+          ['!=', ['get', 'subclass'], 'junction'],
           [
             'in',
             ['get', 'class'],
@@ -323,18 +325,24 @@ export function buildMapStyle(
           'text-halo-width': 2,
         },
       },
-      // IC・JCT（highway=motorway_junction）。番号があれば「番号 名称」で表示。
+      // IC・JCT（highway=motorway_junction）。
+      // タイル上では subclass='junction' として出力され、class は接続する道路種別となる。
+      // 番号(ref)があれば「番号 名称」、無ければ名称のみを表示する。
       {
         id: 'label-junction',
         type: 'symbol',
         source: SOURCE_ID,
         'source-layer': 'transportation_name',
         minzoom: 12,
-        filter: ['==', ['get', 'class'], 'motorway_junction'],
+        filter: [
+          'all',
+          ['==', ['get', 'subclass'], 'junction'],
+          ['has', 'name'],
+        ],
         layout: {
           'text-field': [
             'case',
-            ['has', 'ref'],
+            ['!=', ['coalesce', ['get', 'ref'], ''], ''],
             ['concat', ['get', 'ref'], ' ', LABEL_TEXT],
             LABEL_TEXT,
           ],
