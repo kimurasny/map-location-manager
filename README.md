@@ -154,7 +154,7 @@ docker compose up --build
 | 国道・主要道 | `transportation` `class=trunk/primary/secondary/tertiary` | 全ズーム |
 | 道路番号 | `transportation_name` の `ref` | 10 以上 |
 | 道路名 | `transportation_name` の `name` | 13 以上 |
-| IC・JCT 名 | `transportation_name` `class=motorway_junction` | 12 以上 |
+| IC・JCT 名 | `transportation_name` `subclass=junction` | 12 以上 |
 | SA・PA 名 | `poi` `subclass=services/rest_area`（後述のレイヤ拡張が必要） | 12 以上 |
 | 鉄道路線 | `transportation` `class=rail/transit` | 8 以上 |
 | 鉄道路線名・駅名 | `transportation_name` `class=rail/transit`、`poi` `subclass=station` | 11 / 13 以上 |
@@ -180,7 +180,7 @@ IC・JCT（`highway=motorway_junction`）は標準スキーマの `transportatio
 
 | 変数 | 既定値 | 説明 |
 | --- | --- | --- |
-| `VITE_TILE_JSON_URL` | `http://localhost:8081/data/kanto.json` | ベクタタイルの TileJSON URL。`.env` の `OUTPUT_MBTILES` を変えた場合は合わせて変更する |
+| `VITE_TILE_JSON_URL` | `http://localhost:8081/data/v3.json` | ベクタタイルの TileJSON URL（OpenMapTiles の MBTiles は名前に関係なく `/data/v3.json` で配信される） |
 | `VITE_GLYPHS_URL` | `http://localhost:8081/fonts/{fontstack}/{range}.pbf` | ラベル用フォントの URL テンプレート |
 
 ### 必要ディスク容量・処理時間の目安
