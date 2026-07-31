@@ -24,8 +24,8 @@
 
 | 層 | 採用技術 |
 | --- | --- |
-| フロントエンド | React 19 / TypeScript / Vite / React Router / React Leaflet / React Query（TanStack Query） / React Hook Form / Zod / OpenAPI Generator |
-| 地図 | OpenStreetMap / OpenMapTiles / TileServer GL（Docker） |
+| フロントエンド | React 19 / TypeScript / Vite / React Router / MapLibre GL JS / React Query（TanStack Query） / React Hook Form / Zod / OpenAPI Generator |
+| 地図 | OpenStreetMap / OpenMapTiles / TileServer GL（Docker） / MapLibre GL JS（ベクタタイル描画） |
 | バックエンド | Spring Boot 3.x / Java 21 / Gradle / MyBatis / PostgreSQL / Flyway / springdoc-openapi |
 | インフラ | Docker Compose |
 
@@ -71,6 +71,7 @@ map-location-manager/
 ├── scripts/                    # 地図データのダウンロード・生成・起動・削除
 │   ├── download-map.sh        # PBF ダウンロード
 │   ├── generate-mbtiles.sh    # OpenMapTiles で MBTiles 生成
+│   ├── patch-omt-layers.sh    # SA・PA 出力のためのレイヤ定義追記
 │   ├── start.sh               # docker compose 起動
 │   ├── clean.sh               # 生成物削除
 │   └── lib.sh                 # 共通処理（.env 読込・チェック）
@@ -99,9 +100,10 @@ docker compose up --build
 #   もしくは: ./scripts/start.sh --build
 ```
 
-生成された `data/kanto.mbtiles` を TileServer GL が読み込み、地図を配信します。
-TileServer GL の同梱スタイル（basic-preview）とフォントでレンダリングするため、
-別途スタイル・フォントを用意する必要はありません。
+生成された `data/kanto.mbtiles` を TileServer GL が読み込み、ベクタタイルとして配信します。
+フロントエンドは MapLibre GL JS でベクタタイルを直接描画し、スタイル定義は
+`frontend/src/features/location/mapStyle.ts` に持ちます（TileServer GL 同梱の
+ラスタスタイル `basic-preview` は使用しません）。
 
 | サービス | URL | 説明 |
 | --- | --- | --- |
@@ -136,6 +138,50 @@ docker compose up --build
 
 ズームの詳細度は `.env` の `MIN_ZOOM` / `MAX_ZOOM` で調整できます
 （既定 0〜14。値を大きくすると詳細になりますが容量・生成時間が増えます）。
+ベクタタイルは MapLibre GL がオーバーズームして描画するため、`MAX_ZOOM=14` のままでも
+ズーム 15 以上で地図・ラベルを表示できます（タイルの再生成は不要です）。
+
+---
+
+## 地図の表示内容（道路・鉄道・地名ラベル）
+
+`frontend/src/features/location/mapStyle.ts` で、OpenMapTiles v3 スキーマの
+以下のレイヤを描画しています。ラベルは `name:ja` を優先し、無い場合は `name` を表示します。
+
+| 表示項目 | 参照レイヤ / 条件 | 表示ズーム |
+| --- | --- | --- |
+| 高速道路 | `transportation` `class=motorway` | 全ズーム（線幅はズームで変化） |
+| 国道・主要道 | `transportation` `class=trunk/primary/secondary/tertiary` | 全ズーム |
+| 道路番号 | `transportation_name` の `ref` | 10 以上 |
+| 道路名 | `transportation_name` の `name` | 13 以上 |
+| IC・JCT 名 | `transportation_name` `class=motorway_junction` | 12 以上 |
+| SA・PA 名 | `poi` `subclass=services/rest_area`（後述のレイヤ拡張が必要） | 12 以上 |
+| 鉄道路線 | `transportation` `class=rail/transit` | 8 以上 |
+| 鉄道路線名・駅名 | `transportation_name` `class=rail/transit`、`poi` `subclass=station` | 11 / 13 以上 |
+| 市区町村名 | `place` `class=city/town/village` | 全ズーム |
+| 地名（丁目・地区など） | `place` `class=suburb/quarter/neighbourhood/hamlet` | 12 以上 |
+| 河川名 | `waterway`（`class=river/canal`）、`water_name` | 11 以上 |
+| 公園名 | `park` の `name` | 11 以上 |
+
+日本語（CJK）のグリフは TileServer GL 同梱フォントに含まれないため、MapLibre GL の
+`localIdeographFontFamily` によりブラウザのローカルフォントで描画します。
+
+### SA・PA 表示のためのレイヤ拡張
+
+OpenMapTiles の標準スキーマには SA・PA（OSM の `highway=services` / `highway=rest_area`）が
+含まれないため、`scripts/patch-omt-layers.sh` が `poi` レイヤの定義へこれらのタグを追記します
+（`scripts/generate-mbtiles.sh` から自動で呼ばれます）。既存の MBTiles に SA・PA を反映するには
+MBTiles の再生成が必要です。
+
+IC・JCT（`highway=motorway_junction`）は標準スキーマの `transportation_name` レイヤに
+含まれるため、拡張なしで表示できます。
+
+### 地図表示に関する環境変数（frontend）
+
+| 変数 | 既定値 | 説明 |
+| --- | --- | --- |
+| `VITE_TILE_JSON_URL` | `http://localhost:8081/data/kanto.json` | ベクタタイルの TileJSON URL。`.env` の `OUTPUT_MBTILES` を変えた場合は合わせて変更する |
+| `VITE_GLYPHS_URL` | `http://localhost:8081/fonts/{fontstack}/{range}.pbf` | ラベル用フォントの URL テンプレート |
 
 ### 必要ディスク容量・処理時間の目安
 

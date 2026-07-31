@@ -29,6 +29,9 @@ if [ ! -d "${OMT_DIR}/.git" ]; then
     || die "OpenMapTiles の取得に失敗しました。"
 fi
 
+# SA・PA など標準スキーマに含まれない地物を出力するため、レイヤ定義へ追記する。
+"$(dirname "${BASH_SOURCE[0]}")/patch-omt-layers.sh"
+
 cd "${OMT_DIR}"
 mkdir -p data build
 
