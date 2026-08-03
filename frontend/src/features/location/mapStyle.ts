@@ -48,7 +48,7 @@ const COLOR = {
 /**
  * 地図スタイルを生成する。
  *
- * @param tileJsonUrl TileServer GL の TileJSON URL（例: http://localhost:8081/data/kanto.json）
+ * @param tileJsonUrl TileServer GL の TileJSON URL（例: http://localhost:8081/data/v3.json）
  * @param glyphsUrl   フォント(glyphs)の URL テンプレート
  */
 export function buildMapStyle(
